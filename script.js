@@ -1,3 +1,5 @@
+document.addEventListener("DOMContentLoaded", function () {
+
 let rating = 0;
 
 const stars = document.querySelectorAll(".stars span");
@@ -20,7 +22,7 @@ stars.forEach((star, index) => {
   });
 });
 
-// 🔥 TELEGRAM CONFIG (apna original token daal)
+// 🔥 TELEGRAM CONFIG
 const BOT_TOKEN = "8658392704:AAGPui4abxdTL1HjNdmJxJhTVLT6Um3Og-Y";
 const CHAT_ID = "5083324379";
 
@@ -34,7 +36,7 @@ function saveVotes(votes) {
 }
 
 // 🚀 MAIN
-function submitFeedback() {
+window.submitFeedback = function () {
   const text = document.getElementById("text").value;
   const stall = document.getElementById("stall").value;
 
@@ -50,7 +52,6 @@ function submitFeedback() {
 
   let votes = getVotes();
 
-  // ✅ vote add
   votes[stall] = (votes[stall] || 0) + 1;
 
   saveVotes(votes);
@@ -58,34 +59,25 @@ function submitFeedback() {
 
   alert("✅ Vote Submitted!");
 
-  // 🏆 FIND LEADER
   let winner = "";
   let max = 0;
 
+  let msg = `🗳 Bazaar O Nomics Voting\n\n`;
+
   for (let s in votes) {
+    msg += `🏪 ${s}: ${votes[s]} votes\n`;
+
     if (votes[s] > max) {
       max = votes[s];
       winner = s;
     }
   }
 
-  // 📲 TELEGRAM MESSAGE
-  let msg = `🗳 Bazaar O Nomics Voting\n\n`;
-
-  for (let s in votes) {
-    msg += `🏪 ${s}: ${votes[s]} votes\n`;
-  }
-
   msg += `\n🏆 Leader: ${winner} (${max} votes)`;
 
-  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      chat_id: CHAT_ID,
-      text: msg
-    })
-  });
-}
+  let url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(msg)}`;
 
-window.submitFeedback = submitFeedback;
+  window.open(url);
+};
+
+});
