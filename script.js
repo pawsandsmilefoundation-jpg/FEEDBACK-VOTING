@@ -1,4 +1,4 @@
-// 🔥 FIREBASE IMPORTS
+// 🔥 FIREBASE
 import { initializeApp }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
@@ -16,7 +16,7 @@ from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 let rating = 0;
 
 
-// ⭐ WAIT FOR PAGE LOAD
+// ⭐ STAR SYSTEM
 document.addEventListener("DOMContentLoaded", () => {
 
   const stars = document.querySelectorAll("#stars span");
@@ -31,10 +31,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       rating = index + 1;
 
-      // Remove old
       stars.forEach(s => s.classList.remove("active"));
 
-      // Add new
       for (let i = 0; i < rating; i++) {
 
         stars[i].classList.add("active");
@@ -73,7 +71,6 @@ const firebaseConfig = {
 
 };
 
-
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
@@ -83,7 +80,7 @@ const BOT_TOKEN = "8658392704:AAGPui4abxdTL1HjNdmJxJhTVLT6Um3Og-Y";
 const CHAT_ID = "5083324379";
 
 
-// 🚀 SUBMIT
+// 🚀 SUBMIT FUNCTION
 async function submitFeedback() {
 
   const stall =
@@ -109,84 +106,18 @@ async function submitFeedback() {
 
     }
 
-
-    // ADD VOTE
     votes[stall] =
     (votes[stall] || 0) + 1;
 
-
-    // SAVE
     await set(ref(db, "votes"), votes);
 
-
     alert("✅ Vote Submitted!");
-
-
-    // FIND LEADER
-    let winner = "";
-    let max = 0;
-
-    for (let s in votes) {
-
-      if (votes[s] > max) {
-
-        max = votes[s];
-        winner = s;
-
-      }
-
-    }
-
-
-    // TELEGRAM MESSAGE
-    let msg =
-`🗳 Bazaar Voting Update
-
-`;
-
-    for (let s in votes) {
-
-      msg +=
-`🏪 ${s}: ${votes[s]} votes
-`;
-
-    }
-
-    msg +=
-`
-⭐ Rating: ${rating}/5
-
-🏆 Leader: ${winner} (${max} votes)
-`;
-
-
-    fetch(
-`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
-      {
-
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-          "application/json"
-        },
-
-        body: JSON.stringify({
-
-          chat_id: CHAT_ID,
-
-          text: msg
-
-        })
-
-      });
 
   }
 
   catch (error) {
 
     console.error(error);
-
     alert("Error submitting vote!");
 
   }
@@ -194,5 +125,5 @@ async function submitFeedback() {
 }
 
 
-// MAKE GLOBAL
+// ⭐ VERY IMPORTANT
 window.submitFeedback = submitFeedback;
