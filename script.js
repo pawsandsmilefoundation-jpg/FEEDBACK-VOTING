@@ -1,83 +1,198 @@
-document.addEventListener("DOMContentLoaded", function () {
+// 🔥 FIREBASE IMPORTS
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
+import {
+  getDatabase,
+  ref,
+  get,
+  set,
+  child
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+
+// ⭐ GLOBAL RATING
 let rating = 0;
 
-const stars = document.querySelectorAll(".stars span");
-const emoji = document.getElementById("emoji");
-const live = document.getElementById("liveRating");
 
-const emojis = ["😡","😕","😐","😊","😍"];
+// ⭐ WAIT FOR PAGE LOAD
+document.addEventListener("DOMContentLoaded", () => {
 
-stars.forEach((star, index) => {
-  star.addEventListener("click", () => {
-    rating = index + 1;
+  const stars = document.querySelectorAll("#stars span");
+  const emoji = document.getElementById("emoji");
+  const live = document.getElementById("liveRating");
 
-    stars.forEach(s => s.classList.remove("active"));
-    for (let i = 0; i < rating; i++) {
-      stars[i].classList.add("active");
-    }
+  const emojis = ["😡","😕","😐","😊","😍"];
 
-    emoji.textContent = emojis[rating - 1];
-    live.innerText = `⭐ ${rating} / 5`;
+  stars.forEach((star, index) => {
+
+    star.addEventListener("click", () => {
+
+      rating = index + 1;
+
+      // Remove old
+      stars.forEach(s => s.classList.remove("active"));
+
+      // Add new
+      for (let i = 0; i < rating; i++) {
+
+        stars[i].classList.add("active");
+
+      }
+
+      emoji.textContent = emojis[rating - 1];
+      live.innerText = `⭐ ${rating} / 5`;
+
+    });
+
   });
+
 });
 
-// 🔥 TELEGRAM CONFIG
+
+// 🔥 FIREBASE CONFIG
+const firebaseConfig = {
+
+  apiKey: "AIzaSyDyVw8Is0UJIDkKwUeb-u86CCg-U5ll_q4",
+
+  authDomain: "voting-54a5c.firebaseapp.com",
+
+  databaseURL:
+  "https://voting-54a5c-default-rtdb.firebaseio.com",
+
+  projectId: "voting-54a5c",
+
+  storageBucket:
+  "voting-54a5c.firebasestorage.app",
+
+  messagingSenderId: "534314424593",
+
+  appId:
+  "1:534314424593:web:ecd2261582ed3dad6114b0"
+
+};
+
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+
+// 📲 TELEGRAM
 const BOT_TOKEN = "8658392704:AAGPui4abxdTL1HjNdmJxJhTVLT6Um3Og-Y";
 const CHAT_ID = "5083324379";
 
-// 📊 STORAGE
-function getVotes() {
-  return JSON.parse(localStorage.getItem("stallVotes")) || {};
-}
 
-function saveVotes(votes) {
-  localStorage.setItem("stallVotes", JSON.stringify(votes));
-}
+// 🚀 SUBMIT
+async function submitFeedback() {
 
-// 🚀 MAIN
-window.submitFeedback = function () {
-  const text = document.getElementById("text").value;
-  const stall = document.getElementById("stall").value;
+  const stall =
+  document.getElementById("stall").value;
 
-  if (!rating || !text || !stall) {
-    alert("Fill all fields!");
+  if (!rating || !stall) {
+
+    alert("Please select rating & stall!");
     return;
+
   }
 
-  if (localStorage.getItem("voted")) {
-    alert("❌ Already voted from this device!");
-    return;
-  }
+  try {
 
-  let votes = getVotes();
+    const snapshot =
+    await get(child(ref(db), "votes"));
 
-  votes[stall] = (votes[stall] || 0) + 1;
+    let votes = {};
 
-  saveVotes(votes);
-  localStorage.setItem("voted", true);
+    if (snapshot.exists()) {
 
-  alert("✅ Vote Submitted!");
+      votes = snapshot.val();
 
-  let winner = "";
-  let max = 0;
-
-  let msg = `🗳 Bazaar O Nomics Voting\n\n`;
-
-  for (let s in votes) {
-    msg += `🏪 ${s}: ${votes[s]} votes\n`;
-
-    if (votes[s] > max) {
-      max = votes[s];
-      winner = s;
     }
+
+
+    // ADD VOTE
+    votes[stall] =
+    (votes[stall] || 0) + 1;
+
+
+    // SAVE
+    await set(ref(db, "votes"), votes);
+
+
+    alert("✅ Vote Submitted!");
+
+
+    // FIND LEADER
+    let winner = "";
+    let max = 0;
+
+    for (let s in votes) {
+
+      if (votes[s] > max) {
+
+        max = votes[s];
+        winner = s;
+
+      }
+
+    }
+
+
+    // TELEGRAM MESSAGE
+    let msg =
+`🗳 Bazaar Voting Update
+
+`;
+
+    for (let s in votes) {
+
+      msg +=
+`🏪 ${s}: ${votes[s]} votes
+`;
+
+    }
+
+    msg +=
+`
+⭐ Rating: ${rating}/5
+
+🏆 Leader: ${winner} (${max} votes)
+`;
+
+
+    fetch(
+`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
+      {
+
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+          "application/json"
+        },
+
+        body: JSON.stringify({
+
+          chat_id: CHAT_ID,
+
+          text: msg
+
+        })
+
+      });
+
   }
 
-  msg += `\n🏆 Leader: ${winner} (${max} votes)`;
+  catch (error) {
 
-  let url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(msg)}`;
+    console.error(error);
 
-  window.open(url);
-};
+    alert("Error submitting vote!");
 
-});
+  }
+
+}
+
+
+// MAKE GLOBAL
+window.submitFeedback = submitFeedback;
